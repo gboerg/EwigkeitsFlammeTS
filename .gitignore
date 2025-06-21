@@ -9,6 +9,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .log
+src/database/bot.db
 
 # OS
 .DS_Store

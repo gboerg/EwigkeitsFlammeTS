@@ -1,7 +1,8 @@
 {
   "dependencies": {
     "discord.js": "^14.20.0",
-    "dotenv": "^16.5.0"
+    "dotenv": "^16.5.0",
+    "sqlite": "^5.1.1"
   },
   "devDependencies": {
     "tsup": "^8.5.0",
@@ -10,5 +11,8 @@
   },
   "dev": "tsx watch src/index.ts",
   "start": "node dist/index.js",
-  "build": "tsup src/index.ts --minify"
+  "build": "tsup src/index.ts --minify",
+  "name": "mein-bot",
+  "version": "1.0.0",
+  "type": "module"
 }
