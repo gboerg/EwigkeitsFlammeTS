@@ -1,12 +1,12 @@
 import { CommandInteraction, MessageFlags, SlashCommandBuilder } from "discord.js";
-import type { Command } from "../types/command.ts";
+import type { Command } from "../../types/command.ts";
 
 export default {
     data: new SlashCommandBuilder()
       .setName("ping")
       .setDescription("Replies with Pong!"),
 
-    execute: async (client, interaction) => {
+    execute: async (interaction) => {
       await interaction.deferReply({ flags: MessageFlags.Ephemeral }); 
 
       // Do any long-running tasks here (though none for "ping")

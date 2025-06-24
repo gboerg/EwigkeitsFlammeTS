@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-const {TOKEN, CLIENT_ID} = process.env;
+const {TOKEN, CLIENT_ID, GUILD_ID} = process.env;
 
 
 if (!TOKEN || !CLIENT_ID) {
@@ -10,5 +10,6 @@ if (!TOKEN || !CLIENT_ID) {
 
 export const config = {
     TOKEN,
-    CLIENT_ID
+    CLIENT_ID, 
+    GUILD_ID
 }

@@ -1,0 +1,33 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// url      = env("DATABASE_URL")
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../generated/prisma"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../src/database/bot.db"
+}
+
+model User {
+  guild_id  String
+  user_id   String
+  is_banned Boolean @default(false)
+  // @@unique([guild_id, user_id])
+
+  @@id([guild_id, user_id])
+}
+
+model Threads {
+  guild_id               String
+  user_id                String
+  thread_channel         String @default("0")
+  first_user_message     String @default("0")
+  thread_initial_message String @default("0")
+
+  @@id([guild_id, thread_initial_message])
+}
