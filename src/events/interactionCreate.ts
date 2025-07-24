@@ -8,9 +8,18 @@ export default {
     async execute(interaction: Interaction) {
         // Hol den erweiterten Client aus der Interaktion
         const client = interaction.client as ExtendedClient;
+        // const limiter = client.rest.globalRemaining
+        // console.log(`New Limit: ${limiter}`)
+
+        // if (limiter <= 48) {
+        //     console.log("API LIMIT REACHED - Queing actions")
+        //     console.log("saved interaction", interaction)
+        //     return
+        // }
 
         if (interaction.isChatInputCommand()) {
             const command = client.commands.get(interaction.commandName);
+            console.log("command executet: ", command)
 
             if (!command) {
                 console.error(`Kein Befehl mit dem Namen ${interaction.commandName} gefunden.`);

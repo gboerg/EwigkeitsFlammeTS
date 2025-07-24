@@ -1,9 +1,13 @@
-import { Events, Guild, type Interaction } from "discord.js";
+import { ChannelType, Events, Guild, type Interaction } from "discord.js";
 import {threadCloseConfirmRow, threadCloseConfirmRow2, threadStartRow, threadStartRow2} from "../../components/threadComponents.ts"
 import prisma from "../../database/database.ts"
 
 export default {
     name: Events.InteractionCreate,
+    /**
+     *
+     *
+     * @param {Interaction} button
     /**
      *
      *
@@ -20,6 +24,7 @@ export default {
             const thread_channel= button.channel
             const button_msg = button.message
             const threadMain = thread_channel.parent
+            const parent = button.channel.parent
             // threadMain.
             switch(button.customId) {
                 case 'thread_close':
@@ -29,6 +34,32 @@ export default {
                     break
 
                 case 'thread_close_confirm': 
+                    const solved_status = await getDBResults(guild, user.id, thread_channel.id)
+                    const status = solved_status[0].thread_solved_status
+                    if (parent.type == ChannelType.GuildForum) {
+
+                        const getSpecificParentTag = (tagName: string) => {
+                            return parent.availableTags.find(tag => tag.name.toLowerCase() === tagName.toLowerCase());
+                        }
+                        const solved = getSpecificParentTag("solved");
+                        const unsolved = getSpecificParentTag('unsolved')
+
+                        if (status === 1) {
+
+                            if (thread_channel) {
+                                thread_channel.edit({appliedTags: [solved.id]})
+                            }
+                        } else if (status === 0) {
+                            if (thread_channel) {
+                                thread_channel.edit({appliedTags: [unsolved.id]})
+                            } 
+                        } else if (status === 3) {
+                            console.log("No Tag selected skipping steps")
+                        }
+
+                    }
+
+                    console.log("Solved Database entry: ", )
                     thread_channel.edit({locked: true, archived: true})
                     break
 

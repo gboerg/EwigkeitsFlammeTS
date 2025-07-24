@@ -1,59 +1,147 @@
-import {
-  Events,
-  ChannelType,
-  type Interaction,
-  type ThreadChannel,
-} from "discord.js";
+import { Events, ChannelType, type Interaction } from "discord.js";
+import p from "../../database/database.ts";
+import prisma from "../../database/database.ts";
 
 export default {
-  name: Events.InteractionCreate,
-  async execute(menu: Interaction) {
-    if (!menu.isStringSelectMenu()) return;
+    name: Events.InteractionCreate,
+    execute: async (menu: Interaction) => {
+        if (!menu.isStringSelectMenu()) return;
 
-    console.log("MENU SELECT");
-    await menu.deferUpdate();
+        await menu.deferUpdate();
 
-    const channel = menu.channel;
-    const guild = menu.guild;
+        const channel = menu.channel;
+        const parent = channel?.parent;
+        const guild = menu.guild;
 
-    if (!guild || !channel || channel.type !== ChannelType.PublicThread) {
-      console.log("Not a valid thread channel");
-      return;
-    }
-
-    const parent = channel.parent;
-    if (!parent || parent.type !== ChannelType.GuildForum) {
-      console.log("Not a forum parent");
-      return;
-    }
-
-    const parent_info = await parent.fetch();
-    const parent_tags = parent_info.availableTags;
-    console.log("Stringify:", JSON.stringify(parent_tags, null, 2));
-
-
-
-    // TODO: Tags dynamisch Hinzufügen und gegebenfalls auch durch eine Config mit SlashCommand ändern lassen da Hardcode echt mies ist
-    const tag_bug = parent_tags.find((tag) => tag.name === "Bug");
-    if (!tag_bug) {
-      console.log("Tag 'Bug' not found.");
-      return;
-    }
-
-    switch (menu.customId) {
-      case "tag_select":
-        switch (menu.values[0]) {
-          case "bug":
-            console.log("Applying tag 'Bug'");
-            await (channel as ThreadChannel).setAppliedTags([tag_bug.id]);
-            break;
-          case "test":
-            console.log("TEST");
-            break;
-          default:
-            console.log("Unknown Action");
+        if (!guild || !channel || channel.type !== ChannelType.PublicThread) {
+            console.log("Not a valid thread channel");
+            return;
         }
-        break;
+
+        // Selector-Tag-Zuordnung
+        const selectorTagMap: Record<string, string[]> = {
+            tag_select: ['bug', 'test'],
+            tag_solved_select: ['solved', 'unsolved'],
+        };
+
+        // === Wenn NICHT Forum ===
+        if (!parent || parent.type !== ChannelType.GuildForum) {
+            if (menu.customId === 'tag_select') {
+                const dbContent = await getDbConntent(guild.id, channel.id);
+                if (!dbContent || !dbContent.thread_channel_name) {
+                    console.error(`Kein ursprünglicher Name für ${channel.id} in DB.`);
+                    return;
+                }
+                const originalName = dbContent.thread_channel_name;
+                const selectedValue = menu.values[0];
+                let newName = originalName;
+
+                switch (selectedValue) {
+                    case 'bug':
+                        newName = `🪳 [Bug] ${originalName}`;
+                        break;
+                    case 'test':
+                        newName = `🧪 [Test] ${originalName}`;
+                        break;
+                    case 'tag_remove_0': {
+                        const allowedTags = selectorTagMap[menu.customId] ?? [];
+                        break;
+                    }
+                    default:
+                        console.log(`Unbekannte Auswahl: ${selectedValue}`);
+                        return;
+                }
+
+                try {
+                    if (newName.length > 100) newName = newName.substring(0, 100);
+                    await channel.setName(newName);
+                    console.log(`Kanal umbenannt: "${newName}"`);
+                } catch (error) {
+                    console.error("Fehler beim Umbenennen:", error);
+                }
+            }
+            return;
+        }
+
+        // === Forum-Logik ===
+        if (parent.type === ChannelType.GuildForum) {
+            if (menu.customId === 'tag_select' || 'tag_solved_select') {
+                console.log("some menu was triggered")
+                const selectedValue = menu.values[0];
+
+                const getSpecificParentTag = (tagName: string) => {
+                    return parent.availableTags.find(tag => tag.name.toLowerCase() === tagName.toLowerCase());
+                };
+                console.log("available tags: ", parent.availableTags)
+                const bug = getSpecificParentTag("bug");
+                const test = getSpecificParentTag("test");
+                const solved = getSpecificParentTag("solved");
+                const unsolved = getSpecificParentTag('unsolved')
+
+                switch (selectedValue) {
+                    case 'bug':{
+                        if (bug) await channel.setAppliedTags([bug.id]);
+                        break;
+                    }
+                    case 'test':{
+                        if (test) await channel.setAppliedTags([test.id]);
+                        break;
+                    }
+                    case 'solved':
+                        console.log("cased solved")
+                        await prisma.threads.update({
+                            where:{
+                                guild_id_thread_channel : {
+                                    guild_id: guild.id,
+                                    thread_channel: channel.id
+                                }
+    
+                            }, 
+                            data: {
+                                thread_solved_status: 1
+                            }
+                        })
+                        break;
+
+
+                    case 'unsolved': {
+                        if (unsolved) await channel.setAppliedTags([unsolved.id])
+                        break
+                    }
+                    case 'tag_remove_0': {
+                        const allowedTags = selectorTagMap[menu.customId] ?? [];
+                        break;
+                    }
+
+                    case 'tag_remove_1' : {
+                        const allowedTags = selectorTagMap[menu.customId] ?? [];
+                        break;
+                    }
+                    default:
+                        console.log(`Unbekannte Auswahl: ${selectedValue}`);
+                        return;
+                }
+            } else {
+                console.log("error during")
+                }
+            }
+            return;
+        }
     }
-  },
-};
+
+
+
+
+
+// 📦 DB-Anfrage
+async function getDbConntent(guild: string, channel: string) {
+    const values = await p.threads.findFirst({
+        select: { thread_channel_name: true },
+        where: {
+            guild_id: guild,
+            thread_channel: channel,
+        }
+    });
+    console.log("Werte aus DB:", values);
+    return values;
+}

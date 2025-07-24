@@ -26,8 +26,58 @@ model Threads {
   guild_id               String
   user_id                String
   thread_channel         String @default("0")
+  thread_channel_name    String @default("thread_channel_name")
   first_user_message     String @default("0")
   thread_initial_message String @default("0")
+  thread_closed_status   Int    @default(0)
+  thread_solved_status   Int    @default(3)
 
-  @@id([guild_id, thread_initial_message])
+  @@id([guild_id, thread_channel])
 }
+
+model Messages {
+  guild_id        String
+  user_id         String
+  message_id      String
+  channel_id      String
+  timestamp       Int
+  queued_deletion Boolean
+
+  @@id([guild_id, message_id])
+}
+
+model Commands {
+  guild_id     String
+  user_id      String
+  command_name String
+
+  @@unique([guild_id])
+}
+
+model Actions {
+  guild_id  String
+  user_id   String
+  command   String
+  timestamp Int
+
+  @@unique([guild_id, command])
+}
+
+// model Threads {
+//   guild_id               String
+//   user_id                String
+//   thread_channel         String @default("0")
+//   thread_channel_name    String @default("thread_channel_name")
+//   first_user_message     String @default("0")
+//   thread_initial_message String @default("0")
+//   thread_closed_status   Int    @default(0)
+//   thread_solved_status   Int    @default(0)
+
+//   @@id([guild_id, thread_initial_message])
+// }
+
+// model queuedActions {
+//   guild_id String
+//   user_id String
+//   commandId
+// }

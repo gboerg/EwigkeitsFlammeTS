@@ -29,12 +29,16 @@ export const tag_select_menu = new StringSelectMenuBuilder()
         new StringSelectMenuOptionBuilder()
             .setLabel("test")
             .setDescription("test")
-            .setValue("test")
+            .setValue("test"),
+        new StringSelectMenuOptionBuilder()
+            .setLabel("Remove Tags")
+            .setDescription("Remove tags of the current page")
+            .setValue("tag_remove_0")
     )
 
 
 export const tag_solved_menu = new StringSelectMenuBuilder()
-    .setCustomId("tag__solvedselect")
+    .setCustomId("tag_solved_select")
     .setPlaceholder("Was beschreibt dein Problem als bestes")
     .setOptions(
         new StringSelectMenuOptionBuilder()
@@ -44,7 +48,12 @@ export const tag_solved_menu = new StringSelectMenuBuilder()
         new StringSelectMenuOptionBuilder()
             .setLabel("Lösung nicht im Chat")
             .setDescription("test")
-            .setValue("unsolved")
+            .setValue("unsolved"),
+        new StringSelectMenuOptionBuilder()
+            .setLabel('Tag Remove')
+            .setDescription("Remove all current tags active in section")
+            .setValue("tag_remove_1")
+        
     )
 
 

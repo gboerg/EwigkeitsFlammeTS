@@ -10,6 +10,7 @@ yarn-debug.log*
 yarn-error.log*
 .log
 src/database/bot.db
+migration.sql
 
 # OS
 .DS_Store

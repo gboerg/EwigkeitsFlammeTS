@@ -6,6 +6,7 @@ import type {
 } from 'discord.js';
 
 export interface Command {
+
     // data kann nun ein einfacher Builder oder einer mit Sub-Commands sein.
     // Das behebt deinen ursprünglichen TypeScript-Fehler.
     data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
@@ -21,10 +22,10 @@ export interface Command {
 // /src/types/event.ts
 // NEUE DATEI: Eine zentrale Definition für deine Event-Typen.
 
-import type { ClientEvents } from 'discord.js';
+// import type { ClientEvents } from 'discord.js';
 
-export interface Event {
-    name: keyof ClientEvents;
-    once?: boolean;
-    execute: (...args: any[]) => Promise<void> | void;
-}
+// export interface Event {
+//     name: keyof ClientEvents;
+//     once?: boolean;
+//     execute: (...args: any[]) => Promise<void> | void;
+// }

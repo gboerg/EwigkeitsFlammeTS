@@ -44,3 +44,12 @@ let prisma = new PrismaClient({ adapter})
 
 
 export default prisma
+
+
+// async function addDBEntry(db_name: string, ) {
+//     prisma[db_name]
+// }
+// // prisma.
+
+
+// addDBEntry()
