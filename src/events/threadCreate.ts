@@ -13,7 +13,7 @@ export default {
         // if (thread.type !== TextChannel) {
 
         // }
-        const thread_intial_msg = await thread.send({content:`Vielen Dank ${author}, dass du unsere Thread-Support System nutzt\nWähle deine Tags aus\nWenn du keine hilfe mehr brauchst kannst du hier dein Ticket schließen:`, components: [threadStartRow2, threadStartRow]})
+        const thread_intial_msg = await thread.send({content:`Vielen Dank ${author}, dass du unsere Thread-Support System nutzt\nWähle deine Tags aus\nWenn du keine hilfe mehr brauchst kannst du hier dein Ticket schließen:`, components: [threadStartRow, threadStartRow2]})
         await thread_intial_msg.pin()
         
 

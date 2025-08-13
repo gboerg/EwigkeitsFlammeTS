@@ -49,10 +49,10 @@ export const tag_solved_menu = new StringSelectMenuBuilder()
             .setLabel("Lösung nicht im Chat")
             .setDescription("test")
             .setValue("unsolved"),
-        new StringSelectMenuOptionBuilder()
-            .setLabel('Tag Remove')
-            .setDescription("Remove all current tags active in section")
-            .setValue("tag_remove_1")
+        // new StringSelectMenuOptionBuilder()
+        //     .setLabel('Tag Remove')
+        //     .setDescription("Remove all current tags active in section")
+        //     .setValue("tag_remove_1")
         
     )
 

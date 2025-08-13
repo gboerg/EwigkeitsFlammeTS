@@ -1,4 +1,4 @@
-import { ChannelType, Events, Guild, type Interaction } from "discord.js";
+import { ChannelType, Events, Guild, ThreadChannel, type Interaction } from "discord.js";
 import {threadCloseConfirmRow, threadCloseConfirmRow2, threadStartRow, threadStartRow2} from "../../components/threadComponents.ts"
 import prisma from "../../database/database.ts"
 
@@ -25,33 +25,51 @@ export default {
             const button_msg = button.message
             const threadMain = thread_channel.parent
             const parent = button.channel.parent
-            // threadMain.
+            const r_channel = button.channel
+
             switch(button.customId) {
                 case 'thread_close':
                     console.log("button_msg:", button_msg)
                     button_msg.edit({components: []})
                     button_msg.edit({components: [threadCloseConfirmRow, threadCloseConfirmRow2]})
                     break
+            // if (r_channel == ChannelType.GuildForum)
+            // let tags = 
+
 
                 case 'thread_close_confirm': 
                     const solved_status = await getDBResults(guild, user.id, thread_channel.id)
                     const status = solved_status[0].thread_solved_status
                     if (parent.type == ChannelType.GuildForum) {
+                        const tags_channel = thread_channel as ThreadChannel
+
+                        let tags = tags_channel.appliedTags
 
                         const getSpecificParentTag = (tagName: string) => {
                             return parent.availableTags.find(tag => tag.name.toLowerCase() === tagName.toLowerCase());
                         }
                         const solved = getSpecificParentTag("solved");
                         const unsolved = getSpecificParentTag('unsolved')
-
                         if (status === 1) {
 
                             if (thread_channel) {
-                                thread_channel.edit({appliedTags: [solved.id]})
+                                if (tags)  {
+                                    tags.push(solved.id)
+                                    tags_channel.setAppliedTags(tags)
+                                } else {
+                                    thread_channel.edit({appliedTags: [solved.id]})
+
+                                }
                             }
                         } else if (status === 0) {
                             if (thread_channel) {
-                                thread_channel.edit({appliedTags: [unsolved.id]})
+                                if (tags) {
+                                    tags.push(unsolved.id)
+                                    tags_channel.setAppliedTags(tags)
+                                } else {
+                                    thread_channel.edit({appliedTags: [unsolved.id]})
+
+                                }
                             } 
                         } else if (status === 3) {
                             console.log("No Tag selected skipping steps")
@@ -87,4 +105,27 @@ async function getDBResults(guild, user, channel) {
     })
     console.log("DB Function Returned vals", results)
     return results
+}
+
+async function changeTags(guild: any, channel: any, tag: any) {
+    const changed = await prisma.threads.upsert({
+        update: {
+            thread_previous_tags: tag
+        }, where: {
+            guild_id_thread_channel: {
+                guild_id: guild.id,
+                thread_channel: channel.id
+            }
+        },create: {
+            guild_id: "sdsad",
+            user_id: "adasdasd",
+            first_user_message: "sdasd", 
+            thread_channel: "sdasd",
+            thread_channel_name:"sdasdas",
+            thread_closed_status: 1,
+            thread_initial_message: "sdasd",
+            thread_previous_tags: tag,
+            thread_solved_status: 0
+        }
+    })
 }

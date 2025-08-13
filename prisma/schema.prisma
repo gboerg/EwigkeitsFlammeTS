@@ -1,22 +1,30 @@
 // This is your Prisma schema file,
+
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// url      = env("DATABASE_URL")
+// url      = env("DATABASE_URL")
+
 generator client {
-  provider        = "prisma-client-js"
-  output          = "../generated/prisma"
+  provider = "prisma-client-js"
+
+  output = "../generated/prisma"
+
   previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "sqlite"
-  url      = "file:../src/database/bot.db"
+
+  url = "file:../src/database/bot.db"
 }
 
 model User {
-  guild_id  String
-  user_id   String
+  guild_id String
+
+  user_id String
+
   is_banned Boolean @default(false)
+
   // @@unique([guild_id, user_id])
 
   @@id([guild_id, user_id])
@@ -31,12 +39,14 @@ model Threads {
   thread_initial_message String @default("0")
   thread_closed_status   Int    @default(0)
   thread_solved_status   Int    @default(3)
+  thread_previous_tags   String @default("empty")
 
   @@id([guild_id, thread_channel])
 }
 
 model Messages {
   guild_id        String
+  executer        String
   user_id         String
   message_id      String
   channel_id      String
@@ -55,29 +65,16 @@ model Commands {
 }
 
 model Actions {
-  guild_id  String
-  user_id   String
-  command   String
-  timestamp Int
+  guild_id     String
+  executor     String?
+  channel_id   String
+  channel_name String?
+  command      String
+  user_id      String?
+  timestamp    Int
+  active       Boolean
 
-  @@unique([guild_id, command])
+  @@id([guild_id, command])
 }
 
-// model Threads {
-//   guild_id               String
-//   user_id                String
-//   thread_channel         String @default("0")
-//   thread_channel_name    String @default("thread_channel_name")
-//   first_user_message     String @default("0")
-//   thread_initial_message String @default("0")
-//   thread_closed_status   Int    @default(0)
-//   thread_solved_status   Int    @default(0)
 
-//   @@id([guild_id, thread_initial_message])
-// }
-
-// model queuedActions {
-//   guild_id String
-//   user_id String
-//   commandId
-// }

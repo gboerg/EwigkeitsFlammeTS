@@ -10,14 +10,18 @@ export default {
 
         const guild = thread.guild
 
-        await p.threads.delete({
-            where: ({
-                guild_id_thread_channel: {
-                    guild_id: guild.id,
-                    thread_channel: thread.id
-                }
+        if (thread) {
+            await p.threads.delete({
+                where: ({
+                    guild_id_thread_channel: {
+                        guild_id: guild.id,
+                        thread_channel: thread.id
+                    }
+                })
             })
-        })
+
+        }
+
     }
 
 }

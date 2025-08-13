@@ -6,6 +6,7 @@
     "discord.js": "^14.20.0",
     "dotenv": "^16.5.0",
     "luxon": "^3.7.1",
+    "p-queue": "^8.1.0",
     "sqlite": "^5.1.1"
   },
   "devDependencies": {

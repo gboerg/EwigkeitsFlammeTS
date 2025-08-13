@@ -19,7 +19,7 @@ export default {
 
         if (interaction.isChatInputCommand()) {
             const command = client.commands.get(interaction.commandName);
-            console.log("command executet: ", command)
+            console.log("command executed: ", command)
 
             if (!command) {
                 console.error(`Kein Befehl mit dem Namen ${interaction.commandName} gefunden.`);

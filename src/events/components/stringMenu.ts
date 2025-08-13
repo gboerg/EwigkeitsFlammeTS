@@ -78,43 +78,88 @@ export default {
                 const solved = getSpecificParentTag("solved");
                 const unsolved = getSpecificParentTag('unsolved')
 
+                
+                const solvedMsg = "\n\nDu hast ausgewählt, dass die Lösung nicht im Chat steht \n Wird bei Schließung des Threads Übernommen"
+                const unsolvedMsg = "\n\nDu hast ausgewählt, dass die Lösung im Chat steht \n Wird bei Schließung des Threads Übernommen"
+
+                let tags = channel.appliedTags;
+
                 switch (selectedValue) {
                     case 'bug':{
-                        if (bug) await channel.setAppliedTags([bug.id]);
+                        // tags.length == 0
+                        tags.push(bug.id)
+                        await channel.setAppliedTags(tags)
                         break;
                     }
                     case 'test':{
-                        if (test) await channel.setAppliedTags([test.id]);
+                        // tags.length == 0
+                        tags.push(test.id)
+                        await channel.setAppliedTags(tags)
                         break;
                     }
-                    case 'solved':
-                        console.log("cased solved")
-                        await prisma.threads.update({
-                            where:{
-                                guild_id_thread_channel : {
-                                    guild_id: guild.id,
-                                    thread_channel: channel.id
-                                }
-    
-                            }, 
-                            data: {
-                                thread_solved_status: 1
-                            }
-                        })
-                        break;
 
+
+
+
+
+
+
+
+                    case 'solved': {
+                        const getMsg = menu.message.content;
+
+                        // Entfern alle bekannten Statusmeldungen, egal wo sie in der Nachricht stehen
+                        const cleanedMsg = getMsg.replace(/(\n\nDu hast ausgewählt, dass die Lösung im Chat steht.*)$/s, "");
+                        const preMsg = cleanedMsg.replace(/(\n\nDu hast ausgewählt, dass die Lösung NICHT im Chat steht.*)$/s, "");
+                        
+                        const solvedMsg = "\n\nDu hast ausgewählt, dass die Lösung im Chat steht \n Wird bei Schließung des Threads Übernommen";
+                        await menu.message.edit({
+                            content: preMsg + solvedMsg
+                        });
+
+                        // ... sleep und entfernen ...
+                        
+                        break;
+                    }
 
                     case 'unsolved': {
-                        if (unsolved) await channel.setAppliedTags([unsolved.id])
-                        break
+                        const getMsg = menu.message.content;
+
+                        // Entfern alle bekannten Statusmeldungen, egal wo sie in der Nachricht stehen
+                        const cleanedMsg = getMsg.replace(/(\n\nDu hast ausgewählt, dass die Lösung im Chat steht.*)$/s, "");
+                        const preMsg = cleanedMsg.replace(/(\n\nDu hast ausgewählt, dass die Lösung NICHT im Chat steht.*)$/s, "");
+                        
+                        const unsolvedMsg = "\n\nDu hast ausgewählt, dass die Lösung NICHT im Chat steht \n Wird bei Schließung des Threads Übernommen";
+                        await menu.message.edit({
+                            content: preMsg + unsolvedMsg
+                        });
+                        
+                        // ... sleep und entfernen ...
+                        
+                        break;
                     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                     case 'tag_remove_0': {
-                        const allowedTags = selectorTagMap[menu.customId] ?? [];
+                        channel.edit({appliedTags: []})
                         break;
                     }
 
                     case 'tag_remove_1' : {
-                        const allowedTags = selectorTagMap[menu.customId] ?? [];
+                        channel.edit({appliedTags: []})
                         break;
                     }
                     default:
@@ -144,4 +189,7 @@ async function getDbConntent(guild: string, channel: string) {
     });
     console.log("Werte aus DB:", values);
     return values;
+}
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }

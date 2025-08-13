@@ -2,6 +2,7 @@ import { Client, Collection, GatewayIntentBits } from "discord.js";
 import { config } from "./config.js";
 import type { Command } from "./types/command.ts";
 import { loadCommands, loadEvents } from "./loader.js";
+import prisma from "./database/database.ts";
 
 // Erweitere den Client, um eine Collection für Befehle zu speichern.
 // Das ist der entscheidende Schritt, um 'interaction.client.commands' verfügbar zu machen.
