@@ -4,6 +4,10 @@ import type { Command } from "./types/command.ts";
 import { loadCommands, loadEvents } from "./loader.js";
 import prisma from "./database/database.ts";
 
+
+// Diese Zeile ist wichtig damit der Bot selbstständig den Token erneuert
+import '../src/twitch/twitchManager.ts'
+
 // Erweitere den Client, um eine Collection für Befehle zu speichern.
 // Das ist der entscheidende Schritt, um 'interaction.client.commands' verfügbar zu machen.
 

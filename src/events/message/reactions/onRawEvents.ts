@@ -7,7 +7,7 @@ export default {
     once: false,
     execute: async (data: any) => {
         // Log the raw data to see everything that comes in
-        console.log("raw data:", data);
+        // console.log("raw data:", data);
         // const client = 
         // Check if the 't' property exists and matches a specific event type
         if (data.t === 'MESSAGE_REACTION_ADD') {
@@ -43,13 +43,13 @@ export default {
 
             if (dbResult && dbResult.length > 0) {
                 const result = dbResult[0]
-                console.log("reading")
+                // console.log("reading")
                 const dbAction = result.action
-                console.log("readin2")
+                // console.log("readin2")
                 const dbReaction = result.reaction
                 const message = result.message_id
                 const channel = result.channel_id
-                console.log("readin3")
+                // console.log("readin3")
                 reaction = dbReaction
                 action = dbAction
                 msg = message

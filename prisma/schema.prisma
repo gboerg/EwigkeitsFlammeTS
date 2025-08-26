@@ -94,19 +94,20 @@ model Setup {
 
 // TODO: Twitch Stream Notification  
 model TwitchSetup {
-  Client_ID    String
-  Secret       String
-  access_token String
+  entry             String @default("entry")
+  access_token      String
+  token_expire_time String
 
-  @@id([Client_ID])
+  @@id([entry])
 }
 
 model StreamerTable {
+  id                Int    @id @default(autoincrement())
   guild_id          String
   twitch_user_name  String
   youtube_user_name String
 
-  @@id([guild_id])
+  @@unique([guild_id, twitch_user_name])
 }
 
 model TwitchBroadcastSchedule {
