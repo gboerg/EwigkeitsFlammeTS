@@ -15,7 +15,7 @@ export default {
         .setDescription("main mod command")
         .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
         .setContexts(InteractionContextType.Guild)
-        .addSubcommand(option => option
+        .addSubcommand(subcommand => subcommand
             .setName("ban")
             .setDescription("ban a user")
             .addUserOption(option => option
@@ -34,7 +34,7 @@ export default {
                 .setDescription("the user ID or name you want to unban")
                 .setAutocomplete(true)
                 .setRequired(true))
-        ).addSubcommand(option => option
+        ).addSubcommand(subcommand => subcommand
             .setName("mute")
             .setDescription("mute a user for a set duration")
             .addUserOption(option => option
@@ -60,7 +60,7 @@ export default {
             // .addBooleanOption(option => option
             //     .setName("")
             // )
-        ).addSubcommand(option => option
+        ).addSubcommand(subcommand => subcommand
             .setName("unmute")
             .setDescription("main unmute command")
             .addUserOption(option => option

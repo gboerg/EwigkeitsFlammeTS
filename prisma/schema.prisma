@@ -45,15 +45,14 @@ model Threads {
 }
 
 model Messages {
-  guild_id        String
-  executer        String
-  user_id         String
-  message_id      String
-  channel_id      String
-  timestamp       Int
-  queued_deletion Boolean
+  guild_id   String
+  user_id    String
+  message_id String
+  channel_id String
+  reaction   String
+  action     String
 
-  @@id([guild_id, message_id])
+  @@unique([guild_id, message_id, action])
 }
 
 model Commands {
@@ -77,4 +76,41 @@ model Actions {
   @@id([guild_id, command])
 }
 
+model NotificationRoles {
+  guild_id String
+  executor String
+  user_id  String
+  role     String
 
+  @@id([role])
+}
+
+model Setup {
+  guild_id   String
+  channel_id String
+
+  @@id([guild_id])
+}
+
+// TODO: Twitch Stream Notification  
+model TwitchSetup {
+  Client_ID    String
+  Secret       String
+  access_token String
+
+  @@id([Client_ID])
+}
+
+model StreamerTable {
+  guild_id          String
+  twitch_user_name  String
+  youtube_user_name String
+
+  @@id([guild_id])
+}
+
+model TwitchBroadcastSchedule {
+  broadcast_schedule String
+
+  @@id([broadcast_schedule])
+}

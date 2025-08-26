@@ -18,7 +18,7 @@ export class ExtendedClient extends Client {
 // });
 // }
 
-const client = new ExtendedClient({
+export const client = new ExtendedClient({
     intents: [
         GatewayIntentBits.DirectMessages,
         GatewayIntentBits.GuildMembers,

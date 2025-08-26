@@ -7,5 +7,8 @@ export default {
 
     execute: async (event: Message) => {
         console.log(event.content)
+        
+
+        // event.react
     }
 }

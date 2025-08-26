@@ -1,5 +1,6 @@
 import { skip } from "@prisma/client/runtime/library";
 import { Events, Guild, ChannelType, TextInputStyle, PermissionOverwrites, PermissionFlagsBits, PermissionsBitField } from "discord.js";
+import p from "../database/database.ts";
 
 export default {
     name: Events.GuildCreate,
@@ -8,6 +9,19 @@ export default {
         // Finde heraus, ob ein Kanal mit dem Namen "bot-setup" bereits existiert.
         // .find() durchsucht die Kanal-Collection und gibt den ersten Treffer zurück oder undefined, wenn nichts gefunden wird.
         const setupChannel = g.channels.cache.find(channel => channel.name === "bot-setup");
+        console.log("guild create event triggered: ")
+        if (setupChannel) {
+            await p.setup.upsert({
+                create: {
+                    guild_id: g.id,
+                    channel_id: setupChannel.id
+                }, update: {
+                    channel_id: setupChannel.id,
+                }, where: {
+                    guild_id: g.id,
+                }
+            })
+        }
 
         // Prüfe, ob der Kanal NICHT gefunden wurde (!setupChannel).
         if (!setupChannel) {
@@ -26,6 +40,17 @@ export default {
                     ]
                     // Optional: Füge hier weitere Optionen hinzu, z.B. Berechtigungen
                 });
+
+                await p.setup.upsert({
+                    create: {
+                        guild_id: g.id,
+                        channel_id: setup.id
+                    }, update: {
+                        channel_id: setup.id,
+                    }, where: {
+                        guild_id: g.id,
+                    }
+                })
                 
                 // setup.edit({permissionOverwrites.edit})
                 console.log("Kanal 'bot-setup' erfolgreich erstellt.");

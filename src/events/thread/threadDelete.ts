@@ -1,5 +1,5 @@
 import {Events, ThreadChannel} from 'discord.js' 
-import p from "../database/database.ts"
+import p from "../../database/database.ts"
 
 export default {
     name: Events.ThreadDelete,

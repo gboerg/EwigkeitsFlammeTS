@@ -1,6 +1,6 @@
 import { Events, ThreadChannel, ChannelType, ThreadOnlyChannel, TextChannel } from "discord.js";
-import {threadStartRow, thread_close, tag_select_menu, thread_close_confirm, threadStartRow2} from "../components/threadComponents.ts"
-import prisma from "../database/database.ts"
+import {threadStartRow, thread_close, tag_select_menu, thread_close_confirm, threadStartRow2} from "../../components/threadComponents.ts"
+import p from "../../database/database.ts"
 
 export default {
     name: Events.ThreadUpdate,
