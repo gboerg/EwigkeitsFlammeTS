@@ -115,8 +115,8 @@ async function getStreams(streamer: string) {
         maxBodyLength: Infinity,
         url: 'https://api.twitch.tv/helix/streams?user_login=handofblood',
         headers: { 
-            'Authorization': 'Bearer 8vmm426y39f0ype94uhyyk39rld1df, Bearer 8vmm426y39f0ype94uhyyk39rld1df', 
-            'Client-Id': 'oqv04mh71otrtoyfcaehrwur0l6nxc'
+            'Authorization': 'Bearer {bearer}', 
+            'Client-Id': CLIENT_ID
         }
         };
 
