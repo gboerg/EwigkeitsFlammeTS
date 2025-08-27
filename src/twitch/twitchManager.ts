@@ -3,12 +3,15 @@ import p from '../database/database.ts'
 import axios from 'axios';
 import qs from 'qs';
 import {DateTime} from 'luxon'
+import { client } from "../main.ts";
+import { ChannelType } from "discord.js";
 
 
 
 
 const CLIENT_ID = config.TCLIENT_ID
 const SECRET = config.SECRET
+let status = false;
 
 
 const CHECK_INTERVAL = 3600000; // 1 Stunde in Millisekunden
@@ -18,45 +21,87 @@ function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function mainLoop() {
+
+export async function onlyOnce() {
+    console.log("BOT RDY AND ONLY ONCE TRIGGERED")
+    twitchMain()
+    await StreamerLiveStatusCheck()
+    
+}
+
+
+async function twitchMain() {
     try {
-        console.log("Starte Haupt-Schleife...");
-
-        // Überprüft den Token und erneuert ihn bei Bedarf
         await checkDBEntry();
-
-        // Überprüfe die Streams, nachdem der Token gecheckt wurde
-        // Warte 3 Sekunden, bevor du die Streams abfragst
-        // await delay(3000); 
-        // await getStreams("dein_streamer_name"); // Ersetze "dein_streamer_name"
+        
 
     } catch (error) {
-        console.error("Ein Fehler ist in der Haupt-Schleife aufgetreten:", error);
+        console.log("Error during fetch:", error);
     } finally {
-        // Rufe die Haupt-Schleife nach einer bestimmten Zeit wieder auf
-        setTimeout(mainLoop, 3000);
+        setTimeout(twitchMain, 60000);
     }
 }
+
+
+
+async function checkStreamerDB() {
+    const result = await p.streamerTable.findMany();
+
+    // Verwende .map(), um ein Array von Objekten zurückzugeben
+    // Jedes Objekt enthält den twitch_user_name und die guild_id
+    const streamerData = result.map(streamer => {
+        return {
+            twitch_user_name: streamer.twitch_user_name,
+            guild_id: streamer.guild_id
+        };
+    });
+
+    // Gib das neue Array von Objekten zurück
+    return streamerData;
+}
+
+
+async function StreamerLiveStatusCheck() {
+    const twitchUsernames = await checkStreamerDB();
+
+    for (const streamer of twitchUsernames) {
+        await getStreams(streamer.twitch_user_name);
+
+
+    
+
+
+    setTimeout(StreamerLiveStatusCheck, 90000);
+    }
+}
+
 
 
 
 async function checkDBEntry() {
-    console.log("DB Entry check")
-    let token = ""
-    let expireTime = ""
-    const twitchSetup = await p.twitchSetup.findMany()
-    const extract = twitchSetup[0]
-    token = extract.access_token
-    expireTime = extract.token_expire_time;
-    const now = DateTime.now().toISO()
+    console.log("DB Entry check");
+    
+    // Findet alle Einträge in der Tabelle
+    const twitchSetup = await p.twitchSetup.findMany();
 
-    if (now >= expireTime || !twitchSetup) {
-        getTwitchToken()
+    // Prüfe, ob das Array leer ist (Länge = 0)
+    if (twitchSetup.length === 0) {
+        console.log("Kein DB-Eintrag gefunden, erstelle neuen Token.");
+        await getTwitchToken();
     } else {
-        console.log("No Token Renewal required")
+        const extract = twitchSetup[0];
+        const token = extract.access_token;
+        const expireTime = extract.token_expire_time;
+        const now = DateTime.now().toISO();
+
+        if (now >= expireTime) {
+            console.log("Token ist abgelaufen, erneuere ihn.");
+            await getTwitchToken();
+        } else {
+            console.log("Keine Token-Erneuerung erforderlich.");
+        }
     }
 }
-
 
 
 
@@ -110,24 +155,73 @@ async function getTwitchToken() {
 }
 
 async function getStreams(streamer: string) {
-    let config = {
-        method: 'get',
-        maxBodyLength: Infinity,
-        url: 'https://api.twitch.tv/helix/streams?user_login=handofblood',
-        headers: { 
-            'Authorization': 'Bearer {bearer}', 
-            'Client-Id': CLIENT_ID
-        }
-        };
+    console.log("Get Streams triggered")
+    const dbBearerResult = await p.twitchSetup.findMany()
+    const dbBearer = dbBearerResult[0]
+    const bearer = dbBearer.access_token
 
-        axios.request(config)
-        .then((response) => {
-        console.log(JSON.stringify(response.data));
+    try {
+        const request = await axios.request({
+            method: 'get',
+            maxBodyLength: Infinity,
+            url: `https://api.twitch.tv/helix/streams?user_login=${streamer}`,
+            headers: {
+                'Authorization': `Bearer ${bearer}`,
+                'Client-Id': CLIENT_ID
+            }
         })
-        .catch((error) => {
-        console.log(error);
-        });
+        console.log("Response From Streamer Streams Request: ", request.data)
 
+
+        // Makes data useable in Notification function 
+        const data = request.data
+        await sendNotificationToGuild(streamer, data)
+
+
+
+    } catch (error) {
+        console.log(`[TWITCH | FETCH] : Error during fetching Streams: ${error}`)
+    }
 }
 
-mainLoop()
+// TODO: Seperater Status für jeden Streamer der in der Guilde Aktiv ist um Nachrichten Spam vorzubeugen
+// Das der Channel auch anzeigt: Streamer: Offline mit Link zum Kanal -> Wenn er Live geht wird die Nachricht selbst Überarbeitet mit einer Neuen Benachrichtigung
+// Gerne auch mit Rollen insgesamt oder Pro Streamer diese Nachricht wird allerding öfters gesendet um den Ping zu bekommen
+// Zu dem Ping: Sichergehen das Kein Spam Statfindet falls der Streamer durch selbst und oder Probleme offline geht
+
+
+// Bei Offline Nachricht die Stream Benachrichtigung Löschen damit kein Spam Vorliegt
+
+async function sendNotificationToGuild(streamer: any, data: any) {
+    console.log("Notify Send triggered")
+    const setupDB = await p.setup.findMany()
+    const notifyDB = setupDB[0].stream_notification_channel
+    console.log("notifyDB",notifyDB )
+
+    const streamerDB = await p.streamerTable.findMany({
+        select: {
+            guild_id: true,
+        }, where: {
+            twitch_user_name: streamer
+        }
+    })
+    const extract = streamerDB[0].guild_id
+    // const dbGuild = streamer.guild_id
+    console.log("StreamerDB: ", extract)
+
+
+
+
+
+
+    const guild = client.guilds.cache.get(extract)
+
+
+    const notifyChannel = await guild.channels.fetch(notifyDB)
+    if (!notifyChannel || notifyChannel.type !== 0) { // Überprüfen, ob der Kanal ein Textkanal ist
+        console.error("Kanal nicht gefunden oder ist kein Textkanal.");
+        return;
+    }
+    notifyChannel.send(`HEY: Streamer: ${streamer} ist LIVE AUF: https://www.twitch.tv/${streamer}`)
+
+}

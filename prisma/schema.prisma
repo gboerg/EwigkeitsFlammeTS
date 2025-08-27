@@ -86,8 +86,9 @@ model NotificationRoles {
 }
 
 model Setup {
-  guild_id   String
-  channel_id String
+  guild_id                    String
+  channel_id                  String
+  stream_notification_channel String
 
   @@id([guild_id])
 }
@@ -102,10 +103,12 @@ model TwitchSetup {
 }
 
 model StreamerTable {
-  id                Int    @id @default(autoincrement())
-  guild_id          String
-  twitch_user_name  String
-  youtube_user_name String
+  id                 Int     @id @default(autoincrement())
+  guild_id           String
+  twitch_user_name   String
+  twitch_live_status Boolean
+  youtube_user_name  String
+  live_msg_id        String
 
   @@unique([guild_id, twitch_user_name])
 }
