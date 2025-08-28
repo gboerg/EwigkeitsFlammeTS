@@ -14,7 +14,7 @@ const adapter = new PrismaBetterSQLite3({
 
 })
 
-let prisma = new PrismaClient({ adapter}) 
+let p = new PrismaClient({ adapter}) 
 
 
 // async function main() {
@@ -43,7 +43,7 @@ let prisma = new PrismaClient({ adapter})
 
 
 
-export default prisma
+export default p
 
 
 // async function addDBEntry(db_name: string, ) {

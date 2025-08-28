@@ -3,8 +3,8 @@ import p from '../../database/database.ts'
 
 export default {
     data: new SlashCommandBuilder()
-    .setName("entry")
-    .setDescription("general entry command add/remove")
+    .setName("bot_execute")
+    .setDescription("general execution command of any command")
     .addStringOption(option => option
         .setName("content")
         .setDescription("Example: /entry add TwitchStreamerbycoba")
@@ -34,7 +34,6 @@ export default {
             if (isTwitch) {
                 const regex = /twitch(.*)/i; 
                 const match = formatContent.match(regex);
-
                 if (match && match.length > 1) {
                     const result = match[1].trim();
                     console.log(result);
@@ -54,6 +53,7 @@ export default {
                             twitch_user_name: result,
                             youtube_user_name: "",
                             twitch_live_status: false,
+                            live_channel_id: "",
                             live_msg_id: ""
                         }
                     });
@@ -66,17 +66,17 @@ export default {
                 console.log("Add Entry detected but not twitch")
             }
         }else if (notifyTrue){
-            const regex = /channel(.*)/i; 
-            const match = formatContent.match(regex);
-            const result = match[1].trim();
-            console.log("result of notification: ", result)
+            const regexCh = /channel(.*)/i; 
+            const match = formatContent.match(regexCh);
+            const resultCH = match[1].trim();
+            console.log("result of notification: ", resultCH)
             await p.setup.upsert({
                 create: {
                     guild_id: guild.id,
                     channel_id: "channel_lol",
-                    stream_notification_channel: result,
+                    stream_notification_channel: resultCH,
                 }, update: {
-                    stream_notification_channel: result
+                    stream_notification_channel: resultCH
                 }, where: {
                     guild_id: guild.id
                 }

@@ -8,6 +8,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import type { Command } from "./types/command.js";
+import p from "./database/database.ts";
+
 
 async function deploy() {
     const commandsData = [];
@@ -25,7 +27,6 @@ async function deploy() {
 
     const commandsPath = path.join(process.cwd(), "src", "commands");
     const commandFiles = await getTsFiles(commandsPath);
-
     // Lade die 'data'-Eigenschaft aus jeder Befehlsdatei.
     for (const file of commandFiles) {
         const fileUrl = pathToFileURL(file).href;

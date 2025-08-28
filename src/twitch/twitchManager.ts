@@ -4,11 +4,19 @@ import axios from 'axios';
 import qs from 'qs';
 import {DateTime} from 'luxon'
 import { client } from "../main.ts";
-import { ChannelType } from "discord.js";
+import { ChannelType, EmbedBuilder, Embed, AttachmentBuilder } from "discord.js";
+import path, { dirname } from 'path'; // Wichtig für die korrekte Pfadverwaltung
+import { fileURLToPath } from "url";
+// ...
 
 
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
+const imagePath = path.join(__dirname, '../assets/images/twitch.png');
+// const file = new AttachmentBuilder(imagePath);
+const twitchImage = new AttachmentBuilder(imagePath, { name: 'twitch.png' })
 const CLIENT_ID = config.TCLIENT_ID
 const SECRET = config.SECRET
 let status = false;
@@ -24,7 +32,7 @@ function delay(ms: number) {
 
 export async function onlyOnce() {
     console.log("BOT RDY AND ONLY ONCE TRIGGERED")
-    twitchMain()
+    await twitchMain()
     await StreamerLiveStatusCheck()
     
 }
@@ -153,7 +161,34 @@ async function getTwitchToken() {
         console.error("An error occurred:", error);
     }
 }
+async function getTwitchProfileImage(streamer: string) {
+    const dbBearerResult = await p.twitchSetup.findMany();
+    const bearer = dbBearerResult[0].access_token;
 
+    try {
+        const response = await axios.get('https://api.twitch.tv/helix/users', {
+            headers: {
+                'Authorization': `Bearer ${bearer}`,
+                'Client-Id': CLIENT_ID
+            },
+            params: {
+                login: streamer
+            }
+        });
+
+        const userData = response.data.data[0];
+        if (userData && userData.profile_image_url) {
+            console.log(`[TWITCH | FETCH] Profilbild-URL für ${streamer}: ${userData.profile_image_url}`);
+            return userData.profile_image_url;
+        } else {
+            console.log(`[TWITCH | FETCH] Kein Profilbild für ${streamer} gefunden.`);
+            return null;
+        }
+    } catch (error) {
+        console.error(`[TWITCH | FETCH] Fehler beim Abrufen des Benutzerbildes: ${error}`);
+        return null;
+    }
+}
 async function getStreams(streamer: string) {
     console.log("Get Streams triggered")
     const dbBearerResult = await p.twitchSetup.findMany()
@@ -175,7 +210,8 @@ async function getStreams(streamer: string) {
 
         // Makes data useable in Notification function 
         const data = request.data
-        await sendNotificationToGuild(streamer, data)
+        console.log("Data to be send: ", data)
+        await sendNotificationToGuild(streamer, data.data[0])
 
 
 
@@ -184,44 +220,136 @@ async function getStreams(streamer: string) {
     }
 }
 
-// TODO: Seperater Status für jeden Streamer der in der Guilde Aktiv ist um Nachrichten Spam vorzubeugen
-// Das der Channel auch anzeigt: Streamer: Offline mit Link zum Kanal -> Wenn er Live geht wird die Nachricht selbst Überarbeitet mit einer Neuen Benachrichtigung
-// Gerne auch mit Rollen insgesamt oder Pro Streamer diese Nachricht wird allerding öfters gesendet um den Ping zu bekommen
-// Zu dem Ping: Sichergehen das Kein Spam Statfindet falls der Streamer durch selbst und oder Probleme offline geht
-
-
-// Bei Offline Nachricht die Stream Benachrichtigung Löschen damit kein Spam Vorliegt
-
 async function sendNotificationToGuild(streamer: any, data: any) {
-    console.log("Notify Send triggered")
-    const setupDB = await p.setup.findMany()
-    const notifyDB = setupDB[0].stream_notification_channel
-    console.log("notifyDB",notifyDB )
+    console.log("Notify Send triggered");
+    // The 'streamer' parameter is the username, e.g., 'bycoba'.
+    // The 'data' parameter is the stream data object from Twitch.
+    const isStreamerLive = !!data;
+    const twitchUsername = streamer;
+    
 
+    // Fetch the streamer's data from your DB for all guilds.
     const streamerDB = await p.streamerTable.findMany({
-        select: {
-            guild_id: true,
-        }, where: {
-            twitch_user_name: streamer
-        }
-    })
-    const extract = streamerDB[0].guild_id
-    // const dbGuild = streamer.guild_id
-    console.log("StreamerDB: ", extract)
-
-
-
-
-
-
-    const guild = client.guilds.cache.get(extract)
-
-
-    const notifyChannel = await guild.channels.fetch(notifyDB)
-    if (!notifyChannel || notifyChannel.type !== 0) { // Überprüfen, ob der Kanal ein Textkanal ist
-        console.error("Kanal nicht gefunden oder ist kein Textkanal.");
+        where: { twitch_user_name: twitchUsername }
+    });
+    
+    // If the streamer is not in the DB, there's nothing to do.
+    if (streamerDB.length === 0) {
+        console.log(`Streamer '${twitchUsername}' not found in the database.`);
         return;
     }
-    notifyChannel.send(`HEY: Streamer: ${streamer} ist LIVE AUF: https://www.twitch.tv/${streamer}`)
 
+    // Process each guild the streamer is configured for.
+    for (const streamerInfo of streamerDB) {
+        try {
+            let gameTitle = ""
+            gameTitle = data.game_name
+            const guild = client.guilds.cache.get(streamerInfo.guild_id);
+            if (!guild) {
+                console.error(`Guild ${streamerInfo.guild_id} not found.`);
+                continue;
+            }
+
+            const notifyDB = await p.setup.findFirst({
+                where: { guild_id: guild.id },
+                select: { stream_notification_channel: true }
+            });
+
+            if (!notifyDB || !notifyDB.stream_notification_channel) {
+                console.error(`Notification channel not configured for guild ${guild.id}.`);
+                continue;
+            }
+
+            const notifyCh = await guild.channels.fetch(notifyDB.stream_notification_channel);
+            if (!notifyCh || notifyCh.type !== ChannelType.GuildText) {
+                console.error(`Channel ${notifyDB.stream_notification_channel} is not a text channel.`);
+                continue;
+            }
+            
+            // Check if a message for this stream is already in Discord.
+            let existingMsg = null;
+            if (streamerInfo.live_msg_id) {
+                try {
+                    existingMsg = await notifyCh.messages.fetch(streamerInfo.live_msg_id);
+                } catch (error) {
+                    console.log(`Message with ID ${streamerInfo.live_msg_id} was not found. Will create a new one.`);
+                    // If fetching fails, the message doesn't exist.
+                }
+            }
+            const profileImageUrl = await getTwitchProfileImage(twitchUsername);
+            const thumbnailUrl = data.thumbnail_url.replace('-{width}x{height}', '-1920x1080');
+            // const newName = twitchUsername.toLocaleUpperCase()
+            const newName = twitchUsername
+            // TODO: Notification Role, da @everyone ziehmlich nervig ist und zu Mute führt
+            const getNotfyRole = ""
+            const twitchContent = "||@everyone||\nCobatastischen Guten Tag, jünger der Flamme"
+            const TwitchEmbed = new EmbedBuilder()
+                .setColor(0x990099)
+                .setTitle(`${newName} teilt die Worte der Flamme auf Twitch`)
+                .setURL(`https://www.twitch.tv/${twitchUsername}`)
+                .setThumbnail(profileImageUrl)
+                .addFields(
+                    { name: 'Titel', value: `${data.title}`, inline: false },
+                    { name: '\u200B', value: '\u200B' },
+                    { name: 'Game: ', value: `${data.game_name}`, inline: true },
+                    { name: 'Zuschauer', value: `${data.viewer_count}`, inline: true },
+                    { name: 'Link', value: `https://www.twitch.tv/${twitchUsername}`, inline: true}
+                )
+                .setImage(thumbnailUrl)
+                .setTimestamp()
+                .setFooter({ text: `Gespielt wird mit ganz viel Liebe | Streamer: ${twitchUsername}`, iconURL: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Twitch_logo_2019.svg/2560px-Twitch_logo_2019.svg.png'});
+            // Case 1: Streamer is LIVE and there is NO existing message.
+            if (isStreamerLive && !existingMsg) {
+                console.log(`Streamer '${twitchUsername}' is LIVE. Creating a new notification message.`);
+                const streamMsg = await notifyCh.send({ embeds: [TwitchEmbed], content: twitchContent});
+                
+                // Update DB with new message ID and live status.
+                await p.streamerTable.update({
+                    where: {
+                        guild_id_twitch_user_name: {
+                            guild_id: guild.id,
+                            twitch_user_name: twitchUsername
+                        }
+                    },
+                    data: {
+                        live_msg_id: streamMsg.id,
+                        twitch_live_status: true,
+                    },
+                });
+
+            } 
+            // Case 2: Streamer is LIVE and there IS an existing message.
+            else if (isStreamerLive && existingMsg && data.game_name !== gameTitle) {
+                console.log(`Streamer '${twitchUsername}' is LIVE and changed Game. Updating existing message.`);
+
+                const profileImageUrl = await getTwitchProfileImage(twitchUsername);
+                const thumbnailUrl = data.thumbnail_url.replace('-{width}x{height}', '-1920x1080');
+                await existingMsg.edit({ embeds: [TwitchEmbed] });
+            
+            } 
+            // Case 3: Streamer is OFFLINE and there IS an existing message.
+            else if (!isStreamerLive && existingMsg) {
+                console.log(`Streamer '${twitchUsername}' is OFFLINE. Deleting old message.`);
+                await existingMsg.delete();
+                
+                // Update DB to reflect offline status and remove message ID.
+                await p.streamerTable.update({
+                    where: {
+                        guild_id_twitch_user_name: {
+                            guild_id: guild.id,
+                            twitch_user_name: twitchUsername
+                        }
+                    },
+                    data: {
+                        twitch_live_status: false,
+                        live_msg_id: ""
+                    },
+                });
+            } else {
+                console.log("No relevant changes found - Skipping Message creation and updating")
+            }
+        } catch (error) {
+            console.error(`Error in guild loop for ${streamerInfo.guild_id}:`, error);
+        }
+    }
 }

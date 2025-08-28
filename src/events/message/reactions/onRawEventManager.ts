@@ -1,5 +1,5 @@
 import { Events, Guild, Message, Client, MessageReaction, User } from 'discord.js';
-import p from '../.././../database/database.ts'
+import p from '../../../database/database.ts'
 import {client} from '../../../main.ts'
 
 export default {
