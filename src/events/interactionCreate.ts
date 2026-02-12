@@ -8,6 +8,12 @@ export default {
     async execute(interaction: Interaction) {
         // Hol den erweiterten Client aus der Interaktion
         const client = interaction.client as ExtendedClient;
+
+        if (interaction.member.user.id !== "341960688245276672") {
+            console.log("Only byCoba is allowed to send any interaction")
+            return
+        }
+
         // const limiter = client.rest.globalRemaining
         // console.log(`New Limit: ${limiter}`)
 

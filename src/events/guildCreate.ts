@@ -1,11 +1,26 @@
 import { skip } from "@prisma/client/runtime/library";
 import { Events, Guild, ChannelType, TextInputStyle, PermissionOverwrites, PermissionFlagsBits, PermissionsBitField } from "discord.js";
 import p from "../database/database.ts";
+import { checkRemainingStreamMessages, onlyOnce } from "../twitch/twitchManager.ts";
+import { botManager } from "../bot/smartBotManager.ts";
 
 export default {
     name: Events.GuildCreate,
     once: false,
     execute: async (g: Guild) => {
+
+
+        try {
+            await onlyOnce()
+            await botManager()
+            await checkRemainingStreamMessages()
+            
+        } catch (error) {
+            
+        }
+
+
+
         // Finde heraus, ob ein Kanal mit dem Namen "bot-setup" bereits existiert.
         // .find() durchsucht die Kanal-Collection und gibt den ersten Treffer zurück oder undefined, wenn nichts gefunden wird.
         const setupChannel = g.channels.cache.find(channel => channel.name === "bot-setup");
@@ -14,6 +29,8 @@ export default {
             await p.setup.upsert({
                 create: {
                     guild_id: g.id,
+                    stream_notification_channel: "", 
+                    stream_notification_role: "",
                     channel_id: setupChannel.id
                 }, update: {
                     channel_id: setupChannel.id,
@@ -44,7 +61,9 @@ export default {
                 await p.setup.upsert({
                     create: {
                         guild_id: g.id,
-                        channel_id: setup.id
+                        channel_id: setup.id,
+                        stream_notification_channel: "",
+                        stream_notification_role: ""
                     }, update: {
                         channel_id: setup.id,
                     }, where: {

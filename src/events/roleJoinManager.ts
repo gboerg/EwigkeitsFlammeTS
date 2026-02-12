@@ -12,7 +12,7 @@ export default {
         const role = await event.guild.roles.fetch("1360568933807034509")
 
 
-        if (role.permissions.has([
+        if (!role.permissions.has([
                 "Administrator",
                 "BanMembers",
                 "CreateEvents",
@@ -32,12 +32,10 @@ export default {
                 "ViewGuildInsights"
             ])
         ) {
-            // const owner =  
+            await event.roles.add(role.id)
         }
 
         
-        console.log("The Role", role)
-        event.roles.add(role.id)
 
     }
 }

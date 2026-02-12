@@ -86,10 +86,11 @@ model NotificationRoles {
 }
 
 model Setup {
-  guild_id                    String
-  channel_id                  String
-  stream_notification_role    String @default("")
-  stream_notification_channel String
+  guild_id                      String
+  channel_id                    String
+  stream_notification_role      String  @default("")
+  stream_notification_channel   String
+  notification_channel_msg_send String? @default("")
 
   @@id([guild_id])
 }

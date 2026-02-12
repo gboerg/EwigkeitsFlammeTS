@@ -1,5 +1,5 @@
 import { Client, Events } from "discord.js";
-import {onlyOnce} from '../../src/twitch/twitchManager.ts'
+import {onlyOnce, checkRemainingStreamMessages} from '../../src/twitch/twitchManager.ts'
 import p from "../database/database.ts";
 // import { loadCommands } from "../main.ts";
 import {botManager} from '../bot/smartBotManager.ts'
@@ -13,6 +13,13 @@ export default {
         try {
             await onlyOnce()
             await botManager()
+            await checkRemainingStreamMessages()
+
+
+
+
+
+
             
         } catch (error) {
             
